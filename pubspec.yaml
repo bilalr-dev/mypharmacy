@@ -1,0 +1,30 @@
+name: arabic_pharmacy
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=2.15.0 <3.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_svg: ^2.0.9
+  cupertino_icons: ^1.0.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/pharmacy.png
+    - assets/data/pharmacies.json
+  fonts:
+    - family: Almarai
+      fonts:
+        - asset: assets/Fonts/Almarai-Regular.ttf
