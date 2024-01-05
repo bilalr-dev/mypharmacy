@@ -59,7 +59,7 @@ class _PharmaciesScreenState extends State<PharmaciesScreen> {
               // Display the pharmacies using the PharmaciesBody widget
               return Center(
                 child: Container(
-                  width: MediaQuery.of(context).size.width * 0.7,
+                  width: MediaQuery.of(context).size.width * 0.85,
                   child: PharmaciesBody(pharmacies: snapshot.data!),
                 ),
               );

@@ -1,5 +1,8 @@
 // lib/widgets/pharmacy_details_dialog.dart
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:flutter/services.dart';
 import '../models/pharmacies.dart';
 
 class PharmacyDetailsDialog extends StatelessWidget {
@@ -9,7 +12,6 @@ class PharmacyDetailsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Directionality widget ensures correct text direction for RTL languages
     return Directionality(
       textDirection: TextDirection.rtl,
       child: AlertDialog(
@@ -21,12 +23,6 @@ class PharmacyDetailsDialog extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Display pharmacy address
-            Text(
-              'العنوان: ${pharmacy.address}',
-              textDirection: TextDirection.rtl,
-            ),
-            // Display phone number with label
             Row(
               children: [
                 Text(
@@ -34,72 +30,137 @@ class PharmacyDetailsDialog extends StatelessWidget {
                   textDirection: TextDirection.rtl,
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
-                SizedBox(width: 8),
-                Text(
-                  '${pharmacy.phoneNumber}',
-                  textDirection: TextDirection.ltr,
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                GestureDetector(
+                  onTap: () {
+                    _copyToClipboard(context, pharmacy.phoneNumber);
+                  },
+                  child: Text(
+                    '${pharmacy.phoneNumber}',
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
                 ),
               ],
             ),
             SizedBox(height: 4),
-            // Display pharmacy location
-            Text(
-              'الموقع: ${pharmacy.address}',
-              textDirection: TextDirection.rtl,
-            ),
-            // Display latitude information
-            Row(
-              children: [
-                Text(
-                  'خط العرض:',
-                  textDirection: TextDirection.rtl,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  '${pharmacy.latitude}',
-                  textDirection: TextDirection.ltr,
-                ),
-              ],
-            ),
-            // Display longitude information
-            Row(
-              children: [
-                Text(
-                  'خط الطول:',
-                  textDirection: TextDirection.rtl,
-                ),
-                SizedBox(width: 4),
-                Text(
-                  '${pharmacy.longitude}',
-                  textDirection: TextDirection.ltr,
-                ),
-              ],
-            ),
-            // Display owner's name
             Text(
               'اسم الصيدلي: ${pharmacy.ownerName}',
               textDirection: TextDirection.rtl,
             ),
-            // Add more details as needed
+            GestureDetector(
+              onTap: () {
+                goToMap();
+              },
+              child: Text(
+                'الموقع',
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.blue,
+                ),
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              'معلومات اخرى: ${pharmacy.otherInfo}',
+              textDirection: TextDirection.rtl,
+            ),
           ],
         ),
         actions: [
-          // Close button to dismiss the dialog
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: Text(
-                'إغلاق',
-                textDirection: TextDirection.rtl,
+          Row(
+            children: [
+              SizedBox(width: 10),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue, // Text colorolor
+                ),
+                child: Text(
+                  'إغلاق',
+                  textDirection: TextDirection.rtl,
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  void _copyToClipboard(BuildContext context, String text) {
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم نسخ الرقم'),
+      ),
+    );
+  }
+
+  void goToMap() async {
+    try {
+      var url =
+          'https://www.google.com/maps?q=${pharmacy.latitude},${pharmacy.longitude}';
+      final Uri _url = Uri.parse(url);
+      await launchUrl(_url);
+    } catch (_) {
+      print("Error launching map");
+    }
+  }
+
+  Future<void> launchUrl(Uri url) async {
+    if (await canLaunch(url.toString())) {
+      await launch(url.toString());
+    } else {
+      print('Could not launch $url');
+    }
+  }
+
+  Future<bool> checkPermission() async {
+    bool isEnable = await Geolocator.isLocationServiceEnabled();
+
+    if (!isEnable) {
+      return false;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      // If permission is denied, request user to allow permission again
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        // If permission is denied again
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return false;
+    }
+
+    return true;
+  }
+
+// Get user current location
+  Future<Position?> getUserLocation() async {
+    var isEnable = await checkPermission();
+
+    if (isEnable) {
+      try {
+        Position location = await Geolocator.getCurrentPosition();
+        return location;
+      } catch (e) {
+        print('Error getting user location: $e');
+      }
+    }
+
+    return null;
   }
 }

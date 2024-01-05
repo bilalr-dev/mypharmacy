@@ -1,7 +1,8 @@
 // lib/widgets/pharmacies_body.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'pharmacy_details_dialog.dart'; // Import the custom dialog for pharmacy details
+import 'package:url_launcher/url_launcher.dart';
+import 'pharmacy_details_dialog.dart';
 import '../models/pharmacies.dart';
 
 class PharmaciesBody extends StatelessWidget {
@@ -15,56 +16,53 @@ class PharmaciesBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Build a ListView to display the list of pharmacies
     return ListView.separated(
       key: key,
       itemCount: pharmacies.length,
-      separatorBuilder: (context, index) =>
-          SizedBox(height: 8), // Add spacing between pharmacy items
+      separatorBuilder: (context, index) => SizedBox(height: 8),
       itemBuilder: (context, index) {
-        return buildPharmacyListItem(
-            context, pharmacies[index]); // Build each pharmacy item
+        return buildPharmacyListItem(context, pharmacies[index]);
       },
     );
   }
 
-  // Method to build the UI for each pharmacy item
   Widget buildPharmacyListItem(BuildContext context, Pharmacy pharmacy) {
     return Card(
       elevation: 3,
       child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: Image.asset(
-          'assets/pharmacy.png', // Placeholder image for each pharmacy
-          width: 40,
-          height: 40,
-        ),
-        title: SelectableText(
+        title: Text(
           pharmacy.name,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SelectableText(
+            Text(
               pharmacy.address,
               style: TextStyle(fontSize: 14),
             ),
             const SizedBox(height: 4),
             Row(
               children: [
-                SelectableText(
+                Text(
                   'الهاتف:',
                   style: TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 SizedBox(
-                    width:
-                        1), // Adjust the spacing between the label and the phone number
-                SelectableText(
-                  '${pharmacy.phoneNumber}',
-                  textDirection:
-                      TextDirection.ltr, // Set text direction to left-to-right
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  width: 1,
+                ),
+                GestureDetector(
+                  onTap: () {
+                    _copyToClipboard(context, pharmacy.phoneNumber);
+                  },
+                  child: Text(
+                    '${pharmacy.phoneNumber}',
+                    textDirection: TextDirection.ltr,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.blue,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -86,6 +84,24 @@ class PharmaciesBody extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    _launchPhone(pharmacy.phoneNumber);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.blue, // Text color
+                  ),
+                  child: Text(
+                    'اتصال',
+                    textDirection: TextDirection.rtl,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         onLongPress: () {
@@ -95,7 +111,6 @@ class PharmaciesBody extends StatelessWidget {
     );
   }
 
-  // Method to show a dialog with additional pharmacy details
   void _showPharmacyDetails(BuildContext context, Pharmacy pharmacy) {
     showDialog(
       context: context,
@@ -105,7 +120,6 @@ class PharmaciesBody extends StatelessWidget {
     );
   }
 
-  // Method to show a context menu with options related to the selected pharmacy
   void _showContextMenu(BuildContext context, Pharmacy pharmacy) {
     final String fullInfo = '''
     ${pharmacy.name}
@@ -135,7 +149,6 @@ class PharmaciesBody extends StatelessWidget {
     );
   }
 
-  // Method to copy text to the clipboard and show a Snackbar
   void _copyToClipboard(BuildContext context, String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -143,5 +156,14 @@ class PharmaciesBody extends StatelessWidget {
         content: Text('تم نسخ المعلومات'),
       ),
     );
+  }
+
+  void _launchPhone(String phoneNumber) async {
+    String uri = 'tel:$phoneNumber';
+    try {
+      await launch(uri);
+    } catch (e) {
+      print('Could not launch $uri: $e');
+    }
   }
 }
