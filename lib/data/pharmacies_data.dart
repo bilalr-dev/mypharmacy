@@ -9,13 +9,14 @@ class PharmaciesData {
     try {
       // Step 1: Loading JSON data from the assets
       print('Loading pharmacies data...');
-      String jsonString = await rootBundle.loadString('assets/data/pharmacies.json');
+      String jsonString =
+          await rootBundle.loadString('assets/data/pharmacies.json');
       print('JSON loaded successfully: $jsonString');
-      
+
       // Step 2: Decoding JSON string into a list of dynamic objects
       List<dynamic> jsonList = json.decode(jsonString);
       print('JSON decoded successfully: $jsonList');
-      
+
       // Step 3: Mapping JSON objects to Pharmacy objects
       List<Pharmacy> pharmacies = jsonList.map((json) {
         return Pharmacy(
@@ -30,7 +31,7 @@ class PharmaciesData {
         );
       }).toList();
       print('Pharmacies created successfully: $pharmacies');
-      
+
       // Step 4: Returning the list of Pharmacy objects
       return pharmacies;
     } catch (error) {
